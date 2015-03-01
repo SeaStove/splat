@@ -52,6 +52,15 @@ public class Plane extends MovingObj
     Y = p.getY();
     destination = des;
   }
+  
+  public double getCoord(Plane p,int choose){
+	  Position pp = p.pos;
+	  if(choose == 1){ 
+		  return pp.getX();
+	  } else {
+		  return pp.getY();
+	  }
+  }
 
   public void setCommand( Command c )
   {
@@ -139,6 +148,7 @@ public class Plane extends MovingObj
       processDIRCommand();
       pos.tick(dir);
       processALTCommand();
+      System.out.println( "#"+tick_count+"["+pos.x+":"+pos.y+":"+alt+"] ["+dir.x+":"+dir.y+"]" );
     }
   }
 

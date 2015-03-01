@@ -18,6 +18,11 @@
 
 package atc;
 
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
 import java.lang.Object;
 import java.lang.String;
 import java.lang.Math;
@@ -28,6 +33,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
+
 import javax.swing.*;
 
 /**
@@ -61,7 +67,7 @@ public class ATCUI_impl
 
   // Colors, Icons, Functions for icons
   protected Color rim_color = Color.darkGray;
-  protected Color back_color = Color.blue;
+  protected Color back_color = new Color(38,106,46);
   protected Color text_color = Color.yellow;
   protected Color so_color = Color.orange;
   protected Color so_text_color = Color.magenta;
@@ -72,7 +78,8 @@ public class ATCUI_impl
     "images/NW.gif", "images/N.gif", "images/NE.gif", "images/W.gif",
     "images/back.gif", 
     "images/E.gif", "images/SW.gif", "images/S.gif", "images/SE.gif" };
-
+  String PiePic = "images/pie.gif"; 
+  
     protected void loadIcons()
     {
       int i;
@@ -154,23 +161,56 @@ public class ATCUI_impl
     radarArea.setPreferredSize
       ( new Dimension(radar_area_width, radar_area_height) );
     getContentPane().add( radarArea, BorderLayout.CENTER );
-
-      // radarArea.back
+    	
       radarArea.backImage = new BufferedImage
         ( radar_area_width, radar_area_height, BufferedImage.TYPE_INT_RGB );
       Graphics2D g = radarArea.backImage.createGraphics();
       g.setBackground( back_color );
       g.setColor( rim_color );
+      
+      
       g.fillRect( 0, 0, radar_area_width, radar_area_height );
       g.setColor( back_color );
       g.fillRect( convPos(0), convPos(0),
           radar_area_width-grid_size, radar_area_height-grid_size );
       g.setColor( line_color );
+      char row = 'a';
       int i, j;
-      for ( i=0; i<dx; i++ )
-        for( j=0; j<dy; j++ )
+      int tempY = 10;
+      for ( i=0; i<dx; i++ ){
+        for( j=0; j<dy; j++ ){
+        	if(j==0 && i > 0){
+        		JLabel C = new JLabel( Integer.toString(i) );
+        	      C.setForeground( so_text_color );
+        	      C.setBounds( 
+        	          convPos( i ),
+        	          convPos( 0  ),
+        	          grid_size/3+10, grid_size/2+10
+        	      );
+        	      radarArea.add( C, new Integer(1) ); // So text layer
+        	}
+        	String titleText;
+        	if(i==0 && i < 20){
+        		if( j == 0){
+        			titleText = "A 0";
+        			row++;
+        		}
+        		else
+        			titleText = "" + (row++);
+        		JLabel R = new JLabel( titleText );
+        		R.setForeground( so_text_color );
+        		
+      	      	R.setBounds( 
+      	      		convPos( 0 ),
+      	      		convPos( j ),
+      	      		grid_size/3+20, grid_size/2+10
+      	      );
+      	      radarArea.add( R, new Integer(1) ); // So text layer
+        	}
+        	
           g.draw( new Rectangle( convPos(i)-1, convPos(j)-1, 1, 1 ) );
-
+        }
+      }
       radarArea.backIcon = new ImageIcon( radarArea.backImage );
       radarArea.back = new JLabel( radarArea.backIcon );
       radarArea.back.setBounds( 0, 0, radar_area_width, radar_area_height );
@@ -217,7 +257,7 @@ public class ATCUI_impl
     Graphics2D g = radarArea.backImage.createGraphics();
     g.setColor( so_color );
 
-    if( so instanceof Beacon )
+    /*if( so instanceof Beacon )
     {
       g.drawOval(
           convPos( so.pos.x ) - grid_size/6,
@@ -232,9 +272,9 @@ public class ATCUI_impl
           grid_size/3, grid_size/2
           );
       radarArea.add( sol, new Integer(1) ); // So text layer
-    }
+    }*/
 
-    if( so instanceof Airfield )
+    /*if( so instanceof Airfield )
     {
       int xa[] = new int[3], ya[] = new int[3];
       int l1=grid_size/2, l2=grid_size/6;
@@ -281,8 +321,48 @@ public class ATCUI_impl
           convPos( ((Line)so).second_end.x ), 
           convPos( ((Line)so).second_end.y )
           );
-    }
+    }*/
 
+    
+    // set pie icon --
+    
+    /*JLabel pie = new JLabel( PiePic, JLabel.CENTER );
+    pie.setVerticalTextPosition(JLabel.TOP);
+    pie.setHorizontalTextPosition(JLabel.CENTER);
+    pie.setIconTextGap(text_gap);
+    pie.setForeground(text_color);
+    		
+    pie.setIcon( new ImageIcon(PiePic) ); 
+
+    pie.setBounds(
+    		convPos( convPos(1) ),
+    		convPos( convPos(1) ),
+    		25,
+    		35
+    );
+    
+    radarArea.add( pie, new Integer(2) );
+    System.out.println("added pie");*/
+    
+    BufferedImage image = null;
+    BufferedImage t1 = null;
+    BufferedImage t2 = null;
+    BufferedImage f = null;
+    try {                
+        image = ImageIO.read(new File(PiePic));
+        t1 = ImageIO.read(new File("images/tree1.gif"));
+        t2 = ImageIO.read(new File("images/tree2.gif"));
+        f = ImageIO.read(new File("images/flower1.gif"));
+     } catch (IOException ex) {
+          // handle exception...
+     }
+    g.drawImage(image, convPos(12)-15, convPos(7)-10, null);
+    g.drawImage(t1, convPos(18), convPos(2)-10, null);
+    g.drawImage(t2, convPos(22), convPos(15), null);
+    g.drawImage(f, convPos(3), convPos(7), null);
+    
+    
+    
     radarArea.backIcon = new ImageIcon( radarArea.backImage );
     radarArea.back.setIcon( radarArea.backIcon );
   }
@@ -370,15 +450,13 @@ public class ATCUI_impl
     protected String getPlaneText( Plane p )
     {
       return 
-          (new Character(p.getIdChar())).toString() + 
-          (new Integer(p.alt)).toString();
+          new Character(p.getIdChar()).toString();
     }
 
     protected String getPlaneInfoText( Plane p )
     {
       String rs = new String( " " );
-      rs += (new Character(p.getIdChar())).toString() + p.alt + " ";
-      rs += p.destination.getName() + " ";
+      rs += (new Character(p.getIdChar())).toString() + " ";
       if( p.dir_cmd != null )
       {
         if( p.dir_cmd instanceof CircleCommand )
@@ -421,7 +499,7 @@ public class ATCUI_impl
 
   public void InfoUpdate( int tick_count, int safe_count )
   {
-    infoTopLine.setText( " Time: " + tick_count + ", Safe: " + safe_count );
+    infoTopLine.setText( " Time: " + tick_count + ", Score: " + safe_count );
   }
 
   // Button callback

@@ -81,20 +81,29 @@ public class ATCInputhandler_impl extends Object implements ATCInputhandler
     
     full_cmd_str = new String("");
     int coordcount = 0;
-    while( it.hasNext() && parse_state != 99 && coordcount < 2){
-    	c = ((Character)it.next()).charValue();  
+    while( it.hasNext() && parse_state != 99 && coordcount < 3){
+    	c = ((Character)it.next()).charValue();
 	    //begin
 	    if(coordcount == 0 && !Character.isLetter(c)){
 	    	full_cmd_str += c;
 	    	full_cmd_str += ", ";
 	    	x = Character.getNumericValue(c);
-	    	coordcount++;
+	    	
 	    }
-    	if( coordcount == 1 && Character.isLetter(c) ){
+	    
+	    if(coordcount == 1 && !Character.isLetter(c)){
+	    	x = x * 10 + Character.getNumericValue(c);
+	    	full_cmd_str = Integer.toString(x);
+	    	full_cmd_str += ", ";
+	    	
+	    }
+	    
+    	if( Character.isLetter(c) ){
     		full_cmd_str += c;
 	    	y = Character.getNumericValue(c)-9;
-    		coordcount++;
+    		
     	}
+    	coordcount++;
     } //end while
 
     if( full_flag )

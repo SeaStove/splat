@@ -309,7 +309,22 @@ public class ATCData extends Object
     for( plane_id=0; plane_id<max_plane; plane_id++)
       if( planes[plane_id] != null )
       {
-        planes[plane_id].tick();
+    	  if(zapFlag == true){
+        	  int id = 0;
+    	      for(id=0; id<max_plane; id++){
+    	    	  if( planes[id] != null && isSafe(id, zipzap) )
+    		      {
+    		        atc_obj.getUI().PlaneRemove( planes[id] );
+    		        safe_plane_count++;
+    		        planes[id] = null;
+    		        continue;
+    		      }
+    	      }
+          	zapFlag = false;
+          }
+
+    	  if(planes[plane_id]!=null)	planes[plane_id].tick();
+        
       }
 
     newPlane();
@@ -325,20 +340,7 @@ public class ATCData extends Object
 
       if( isDead(plane_id) )
           throw new ATCGameOverException( "Game Over!" );
-      if(zapFlag == true){
-    	  int id = 0;
-	      for(id=0; id<max_plane; id++){
-	    	  if( planes[id] != null && isSafe(id, zipzap) )
-		      {
-		        atc_obj.getUI().PlaneRemove( planes[id] );
-		        safe_plane_count++;
-		        planes[id] = null;
-		        continue;
-		      }
-	      }
-      	zapFlag = false;
-      }
-
+      
       
     }
 
@@ -353,8 +355,8 @@ public class ATCData extends Object
         //if( ! planes[id].takeoff_flag )
         //    return false;
     	
-    	System.out.println("plane:"+planes[id].X+","+planes[id].Y+"zap:"+zip.x+""+zip.y);
-        if( planes[id].X == (zip.x-1) && planes[id].Y == (zip.y-1) ){
+    	System.out.println("plane:"+(int)planes[id].getCoord(planes[id],1)+","+(int)planes[id].getCoord(planes[id],2)+"zap:"+(zip.x)+","+(zip.y-1));
+        if( (int)planes[id].getCoord(planes[id],1) == (zip.x) && (int)planes[id].getCoord(planes[id],2) == (zip.y-1) ){
         	System.out.println("hit!!\n");
         	return true;
         }
@@ -390,7 +392,7 @@ public class ATCData extends Object
   }
   public boolean setCommand(Zap zapper){
 	  zipzap = zapper;
-	  System.out.println("set zap!"+zapper.x+" "+zapper.y);
+	  //System.out.println("set zap!"+zapper.x+" "+zapper.y);
 	  zapFlag = true;
 	  return true;
   }
