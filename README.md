@@ -3,6 +3,8 @@ SPLAT!
 
 A project for hack illinois 2015
 
+![](http://i.imgur.com/4EKCE1j.png)
+
 ##Overview
 
 Splat is a video game mod based off the game ["Aricraft Controller"](http://sourceforge.net/projects/atcj/). This project was completed using pure java, with minimal additional libraries.
