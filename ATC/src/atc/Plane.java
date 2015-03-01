@@ -27,7 +27,10 @@ public class Plane extends MovingObj
   public ALTCommand alt_cmd = null;
   public DIRCommand dir_cmd = null;
   public StaticObj destination = null;
-
+  
+  public double X = 0;
+  public double Y = 0; 
+  
   protected Plane() { super(); }
   public Plane( Plane ao ) 
     { 
@@ -37,8 +40,7 @@ public class Plane extends MovingObj
       destination = ao.destination;
     }
 
-  public Plane
-    ( Position p, Direction d, int altitude, int i_speed, StaticObj des )
+  public Plane( Position p, Direction d, int altitude, int i_speed, StaticObj des )
   {
     super( p, d, altitude, i_speed );
     if( altitude == 0 )
@@ -46,6 +48,8 @@ public class Plane extends MovingObj
       waiting_flag = true;
       takeoff_flag = false;
     }
+    X = p.getX();
+    Y = p.getY();
     destination = des;
   }
 
@@ -56,8 +60,7 @@ public class Plane extends MovingObj
       alt_cmd = (ALTCommand)c;
       waiting_flag = false;
     }
-    else
-      if( c instanceof DIRCommand )
+    else if( c instanceof DIRCommand )
         dir_cmd = (DIRCommand)c;
   }
 
@@ -81,7 +84,12 @@ public class Plane extends MovingObj
 
   protected void processDIRCommand()
   {
-    if( dir_cmd == null ) return;
+	 Direction picnicDir = new Direction( this.pos, new Position(12, 7) );
+	 Turn turn = Turn.turnTowards( dir, picnicDir );
+     dir.tick( turn );
+     if( dir.equals( picnicDir ) )
+    	 clearDIRCommand();
+/*    if( dir_cmd == null ) return;
     if( !dir_cmd.active_flag )
       if( pos.equals( dir_cmd.pos ) )
         dir_cmd.active_flag = true;
@@ -108,9 +116,9 @@ public class Plane extends MovingObj
       Turn turn = ((CircleCommand)dir_cmd).turn;
       if( turn == null ) return;
       dir.tick( turn );
-    }
+    }*/
   }
-
+  
   public synchronized void tick()
   {
     if( waiting_flag )

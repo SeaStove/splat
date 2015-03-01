@@ -22,6 +22,9 @@ public class ATCInputhandler_impl extends Object implements ATCInputhandler
   protected String full_cmd_str = new String("");
   protected int plane_id;
   protected Command cmd = null;
+  
+  public int x;
+  public int y;
 
   public void processKey( char c )
   {
@@ -75,175 +78,30 @@ public class ATCInputhandler_impl extends Object implements ATCInputhandler
     Plane p = null;
     StaticObj objs[] = null, obj_to = null, obj_at = null;
 
+    
     full_cmd_str = new String("");
-
-    while( it.hasNext() && parse_state != 99 )
-    {
-      c = ((Character)it.next()).charValue();
-      switch( parse_state )
-      {
-        case 1: //begin
-          if( ! Character.isLetter(c) ) return false;
-          full_cmd_str += c;
-          full_cmd_str += ": ";
-          plane_id = Character.toLowerCase(c) - 'a';
-          parse_state = 2;
-          break;
-        case 2: //after id
-          if( c!='a' && c!='t' && c!='c' ) return false;
-          switch (c)
-          {
-            case 'a':
-              full_cmd_str += "altitude: ";
-              if( full_flag )
-                cmd = new ALTCommand();
-              parse_state = 3;
-              break;
-            case 't':
-              full_cmd_str += "turn ";
-              if( full_flag )
-                cmd = new TurnCommand();
-              parse_state = 6;
-              break;
-            case 'c':
-              full_cmd_str += "circle ";
-              if( full_flag )
-                cmd = new CircleCommand();
-              parse_state = 4;
-              break;
-          }
-          break;
-        case 3: //altitude
-          int new_alt;
-          try { new_alt = Integer.parseInt( Character.toString(c) ); }
-          catch(Exception e) { return false; }
-          if( new_alt < 0 || new_alt > 9 )
-            return false;
-          full_cmd_str += Integer.toString(new_alt) + "000 feet ";
-          if( full_flag )
-            ((ALTCommand)cmd).alt = new_alt;
-          parse_state = 99;
-          break;
-        case 4: //circle
-          if( c=='a' )
-          {
-            it.previous();
-            parse_state = 5;
-            break;
-          }
-          if( c!='l' && c!='r' ) return false;
-          full_cmd_str += c=='l' ? "left " : "right ";
-          if( full_flag )
-            ((CircleCommand)cmd).turn = c=='r' ? Turn.RIGHT : Turn.LEFT;
-          parse_state = 5;
-          break;
-        case 5: //before at clause
-          if( c!='a' ) return false;
-          full_cmd_str += "at ";
-          parse_state = 9;
-          break;
-        case 6: //turn
-          if( c == 't' )
-          {
-            full_cmd_str += "towards ";
-            parse_state = 7;
-            break;
-          }
-          p = atc_obj.getData().getPlane( plane_id );
-          if( p == null ) return false;
-          Direction new_dir = new Direction( p.dir );
-          switch(c){
-            case 'r': new_dir.tick( Turn.SMALL_RIGHT ); 
-                      full_cmd_str += "right "; break;
-            case 'l': new_dir.tick( Turn.SMALL_LEFT ); 
-                      full_cmd_str += "left "; break;
-            case 'R': new_dir.tick( Turn.RIGHT ); 
-                      full_cmd_str += "RIGHT "; break;
-            case 'L': new_dir.tick( Turn.LEFT ); 
-                      full_cmd_str += "LEFT "; break;
-            case 'a':
-            case 'q':
-            case 'w':
-            case 'e':
-            case 'd':
-            case 'c':
-            case 'x':
-            case 'z':
-                      new_dir = Direction.charToDir( c );
-                      full_cmd_str += new_dir.getDirName();
-                      full_cmd_str += " ";
-                      break;
-            default: return false;
-          } //end switch
-          if( full_flag )
-            ((TurnCommand)cmd).dir = new_dir;
-          parse_state = 5;
-          break;
-        case 7: //towards sth.
-          switch(c)
-          {
-            case 'b':
-              objs = atc_obj.getData().getBeacons();
-              full_cmd_str += "beacon ";
-              break;
-            case 'e':
-              objs = atc_obj.getData().getExits();
-              full_cmd_str += "exit ";
-              break;
-            case 'a':
-              objs = atc_obj.getData().getAirfields();
-              full_cmd_str += "airfield ";
-              break;
-            default: return false;
-          }
-          parse_state = 8;
-          break;
-        case 8: //obj#
-          int obj_num;
-          try { obj_num = Integer.parseInt( Character.toString(c) ); }
-          catch(Exception e) { return false; }
-          if( obj_num < 0 ) return false;
-          full_cmd_str += "#" + c + " ";
-          obj_to = objs[ obj_num ];
-          if( obj_to == null ) return false;
-
-          if( full_flag )
-          {
-            p = atc_obj.getData().getPlane( plane_id );
-            if( p == null ) return false;
-            ((TurnCommand)cmd).dir = new Direction( p.pos, obj_to.pos );
-          }
-          parse_state = 5;
-          break;
-        case 9: //at beacon
-          if( c!='b' ) return false;
-          full_cmd_str += "beacon ";
-          parse_state = 10;
-          break;
-        case 10: //at beacon#
-          int beacon_num;
-          try { beacon_num = Integer.parseInt( Character.toString(c) ); }
-          catch(Exception e) { return false; }
-          if( beacon_num < 0 ) return false;
-          obj_at = atc_obj.getData().getBeacons()[beacon_num];
-          if( obj_at == null ) return false;
-
-          full_cmd_str += "#" + c;
-          if( full_flag )
-          {
-            ((DIRCommand)cmd).pos = obj_at.pos;
-            ((DIRCommand)cmd).pos_obj = obj_at;
-            cmd.active_flag = false;
-            if( cmd instanceof TurnCommand && obj_to != null )
-              ((TurnCommand)cmd).dir = new Direction( obj_at.pos, obj_to.pos );
-          }
-          parse_state = 99;
-          break;
-      } //end switch
+    int coordcount = 0;
+    while( it.hasNext() && parse_state != 99 && coordcount < 2){
+    	c = ((Character)it.next()).charValue();  
+	    //begin
+	    if(coordcount == 0 && !Character.isLetter(c)){
+	    	full_cmd_str += c;
+	    	full_cmd_str += ", ";
+	    	x = Character.getNumericValue(c);
+	    	coordcount++;
+	    }
+    	if( coordcount == 1 && Character.isLetter(c) ){
+    		full_cmd_str += c;
+	    	y = Character.getNumericValue(c)-9;
+    		coordcount++;
+    	}
     } //end while
 
     if( full_flag )
     {
+    	Zap quickZap = new Zap(x,y);
+    	System.out.println("creating zap..."+x+", "+y);
+    	atc_obj.getData().setCommand(quickZap);
       if( parse_state != 99 && parse_state != 5 && parse_state != 4 )
         return false;
       else

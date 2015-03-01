@@ -38,8 +38,8 @@ public class ATCData extends Object
   protected String user_name;
 
   protected int max_static_obj = 10;
-  protected int max_plane = 26;
-  protected int min_tick_ms = 800;
+  protected int max_plane = 50;
+  protected int min_tick_ms = 100;
   
   // Game dynamic data here...
   protected Exit exits[];
@@ -67,6 +67,9 @@ public class ATCData extends Object
 
   ATCConfig config = null;
   ATCRecord record = null;
+  
+  public Zap zipzap = null;
+  boolean zapFlag = false;
 
 
   protected ATCData() { super(); }
@@ -266,9 +269,9 @@ public class ATCData extends Object
         do { i2 = rand.nextInt(total); } while( i1 == i2 );
 
         o1 = i1<exit_count ? 
-          (StaticObj)(exits[i1]) : (StaticObj)(airfields[i1-exit_count]);
+          (StaticObj)(exits[i1]) : (StaticObj)(exits[i1]);
         o2 = i2<exit_count ? 
-          (StaticObj)(exits[i2]) : (StaticObj)(airfields[i2-exit_count]);
+          (StaticObj)(exits[i2]) : (StaticObj)(exits[i2]);
         if( o1 == null || o2 == null )
           continue;
 
@@ -320,16 +323,23 @@ public class ATCData extends Object
       if( planes[plane_id].changed_flag )
         atc_obj.getUI().PlaneUpdate( planes[plane_id]);
 
-      if( isSafe(plane_id) )
-      {
-        atc_obj.getUI().PlaneRemove( planes[plane_id] );
-        safe_plane_count++;
-        planes[plane_id] = null;
-        continue;
+      if( isDead(plane_id) )
+          throw new ATCGameOverException( "Game Over!" );
+      if(zapFlag == true){
+    	  int id = 0;
+	      for(id=0; id<max_plane; id++){
+	    	  if( planes[id] != null && isSafe(id, zipzap) )
+		      {
+		        atc_obj.getUI().PlaneRemove( planes[id] );
+		        safe_plane_count++;
+		        planes[id] = null;
+		        continue;
+		      }
+	      }
+      	zapFlag = false;
       }
 
-      if( isDead(plane_id) )
-        throw new ATCGameOverException( "Game Over!" );
+      
     }
 
     if( tick_ms > min_tick_ms )
@@ -338,47 +348,26 @@ public class ATCData extends Object
     atc_obj.getUI().InfoUpdate( tick_count, safe_plane_count );
     atc_obj.getUI().refresh();
   }
-    protected boolean isSafe( int id )
+    protected boolean isSafe( int id, Zap zip )
     {
-      if( ! planes[id].takeoff_flag )
+        //if( ! planes[id].takeoff_flag )
+        //    return false;
+    	
+    	System.out.println("plane:"+planes[id].X+","+planes[id].Y+"zap:"+zip.x+""+zip.y);
+        if( planes[id].X == (zip.x-1) && planes[id].Y == (zip.y-1) ){
+        	System.out.println("hit!!\n");
+        	return true;
+        }
         return false;
-      StaticObj destination = planes[id].destination;
-      if( destination.pos != null && destination.pos.equals( planes[id].pos ) )
-        if( destination.exit_alt == planes[id].alt )
-          if( destination.exit_dir != null )
-          {
-            if( planes[id].dir.equals( destination.exit_dir ) )
-              return true;
-          }
-          else 
-            return true;
-      return false;
     }
     protected boolean isDead( int id ) throws ATCGameOverException
     {
       if( ! planes[id].takeoff_flag )
         return false;
 
-      if( planes[id].alt <= 0 )
+      if( planes[id].pos.x == 12 && planes[id].pos.y == 7 )
         throw new ATCGameOverException
-          ( "Plane " + planes[id].getIdChar() + " crashed to the ground." );
-
-      if( planes[id].pos.x < 0 || planes[id].pos.y < 0 ||
-          planes[id].pos.x >= dx || planes[id].pos.y >= dy )
-        throw new ATCGameOverException
-          ( "Plane " + planes[id].getIdChar() + " flew out of radar area." );
-
-      int id2;
-      for( id2=0; id2<max_plane; id2++ )
-        if( planes[id2] != null && id2 != id && planes[id2].takeoff_flag )
-        {
-          if( Math.abs( planes[id].alt - planes[id2].alt ) <= 1 &&
-              Math.abs( planes[id].pos.x - planes[id2].pos.x ) <= 1 &&
-              Math.abs( planes[id].pos.y - planes[id2].pos.y ) <= 1 )
-            throw new ATCGameOverException( 
-                "Planes " + planes[id].getIdChar() + " and " 
-                + planes[id2].getIdChar() + " crashed." );
-        }
+          ( "A bug got to your picnic!" );
 
       return false;
     }
@@ -398,6 +387,12 @@ public class ATCData extends Object
     atc_obj.getUI().PlaneUpdate( planes[id] );
 
     return true;
+  }
+  public boolean setCommand(Zap zapper){
+	  zipzap = zapper;
+	  System.out.println("set zap!"+zapper.x+" "+zapper.y);
+	  zapFlag = true;
+	  return true;
   }
 
   public void setCommandString( String s )

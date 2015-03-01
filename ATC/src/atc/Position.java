@@ -29,7 +29,14 @@ public class Position extends Point
   public Position() { super(); }
   public Position( Position p ) { super( (Point)p ); }
   public Position( int a, int b ) { super( a, b ); }
-
+  
+  public double getX(){
+	  return this.x;
+  }
+  public double getY(){
+	  return this.y;
+  }
+  
   public void tick( Direction dir )
   {
     if( dir == null ) return;
